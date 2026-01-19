@@ -17,8 +17,50 @@ interface ParsedScript {
   characters: string[];
 }
 
-// Regex for character lines: **Character Name**: Dialogue
-const LINE_PATTERN = /^\*\*([^*]+)\*\*:\s*(.+)$/;
+// Patterns for character lines (in order of preference):
+// Character names are 1-3 words max, no lowercase-starting words
+// 1. **Character Name**: Dialogue (markdown bold with colon)
+// 2. **Character Name** - Dialogue (markdown bold with dash)
+// 3. ALL CAPS NAME: dialogue (stage play format with colon)
+// 4. ALL CAPS NAME - dialogue (stage play format with dash)
+// 5. Title Case Name: Dialogue (plain colon)
+// 6. Title Case Name - Dialogue (plain dash)
+const LINE_PATTERNS = [
+  /^\*\*([^*]+)\*\*:\s*(.+)$/,                          // **Name**: text
+  /^\*\*([^*]+)\*\*\s*-\s*(.+)$/,                       // **Name** - text
+  /^([A-Z][A-Z.']*(?:\s+[A-Z][A-Z.']*){0,2}):\s*(.+)$/,  // ALL CAPS: text (1-3 words)
+  /^([A-Z][A-Z.']*(?:\s+[A-Z][A-Z.']*){0,2})\s+-\s+(.+)$/, // ALL CAPS - text (1-3 words)
+  /^([A-Z][a-z.']*(?:\s+[A-Z][a-z.']*){0,2}):\s*(.+)$/,  // Title Case: text (1-3 words)
+  /^([A-Z][a-z.']*(?:\s+[A-Z][a-z.']*){0,2})\s+-\s+(.+)$/, // Title Case - text (1-3 words)
+];
+
+// Patterns for scene notes to skip
+const SCENE_NOTE_PATTERNS = [
+  /^\*[^*]+\*$/,      // *italic text* (single asterisks, full line)
+  /^_[^_]+_$/,        // _italic text_ (underscores, full line)
+  /^\([^)]+\)$/,      // (parenthetical notes)
+  /^\[[^\]]+\]$/,     // [bracketed notes]
+];
+
+function isSceneNote(line: string): boolean {
+  return SCENE_NOTE_PATTERNS.some(pattern => pattern.test(line));
+}
+
+function parseCharacterLine(line: string): { character: string; text: string } | null {
+  for (const pattern of LINE_PATTERNS) {
+    const match = line.match(pattern);
+    if (match) {
+      const character = match[1].trim();
+      const text = match[2].trim();
+
+      // Validate: character name should be reasonable (not too long, not a sentence)
+      if (character.length > 0 && character.length < 40 && !character.includes(',')) {
+        return { character, text };
+      }
+    }
+  }
+  return null;
+}
 
 export function parseMarkdown(markdown: string): ParsedScript {
   const lines = markdown.split("\n");
@@ -30,6 +72,11 @@ export function parseMarkdown(markdown: string): ParsedScript {
   for (const line of lines) {
     const trimmed = line.trim();
     if (!trimmed) continue;
+
+    // Skip scene notes (italics or brackets)
+    if (isSceneNote(trimmed)) {
+      continue;
+    }
 
     // Script title (first # header)
     if (trimmed.startsWith("# ") && title === "Untitled Script") {
@@ -45,11 +92,9 @@ export function parseMarkdown(markdown: string): ParsedScript {
     }
 
     // Character line
-    const match = trimmed.match(LINE_PATTERN);
-    if (match) {
-      const [, character, dialogue] = match;
-      const charName = character.trim();
-      characterSet.add(charName);
+    const parsed = parseCharacterLine(trimmed);
+    if (parsed) {
+      characterSet.add(parsed.character);
 
       // Ensure we have a scene
       if (!currentScene) {
@@ -57,8 +102,8 @@ export function parseMarkdown(markdown: string): ParsedScript {
       }
 
       currentScene.dialogues.push({
-        character: charName,
-        text: dialogue.trim(),
+        character: parsed.character,
+        text: parsed.text,
       });
     }
   }
