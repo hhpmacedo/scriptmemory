@@ -1,9 +1,11 @@
 "use client";
 
-import { useState, useCallback } from "react";
-import { useAllLines } from "@/lib/hooks/useReview";
+import { useState, useCallback, useMemo } from "react";
+import { useAllLines, useFirstScript } from "@/lib/hooks/useReview";
+import { getLearningState, getChunkSummary, isLineMastered } from "@/lib/chunkedLearning";
 import ReviewCard from "./ReviewCard";
 import Link from "next/link";
+import SessionComplete from "./SessionComplete";
 
 interface ReviewSessionProps {
   onExit?: () => void;
@@ -11,17 +13,41 @@ interface ReviewSessionProps {
 
 export default function ReviewSession({ onExit }: ReviewSessionProps) {
   const allLines = useAllLines();
+  const script = useFirstScript();
   const [currentIndex, setCurrentIndex] = useState(0);
-  const [reviewedCount, setReviewedCount] = useState(0);
+
+  const chunkSize = script?.chunkSize ?? 5;
+
+  // Calculate learning state based on current line progress
+  const learningState = useMemo(
+    () => getLearningState(allLines, chunkSize),
+    [allLines, chunkSize]
+  );
+
+  // Get chunk summary for display
+  const chunkSummary = useMemo(() => {
+    if (learningState.phase === "complete") return null;
+    return getChunkSummary(
+      learningState.currentChunkIndex,
+      learningState.totalChunks,
+      chunkSize,
+      allLines.length
+    );
+  }, [learningState, chunkSize, allLines.length]);
 
   const handleComplete = useCallback(() => {
-    setReviewedCount((prev) => prev + 1);
-    // Move to next line, wrapping back to start
-    setCurrentIndex((prev) => (prev + 1) % allLines.length);
-  }, [allLines.length]);
+    // Move to next line in the chunk, wrapping within the chunk
+    setCurrentIndex((prev) => {
+      const nextIndex = prev + 1;
+      if (nextIndex >= learningState.linesToReview.length) {
+        return 0; // Wrap back to start of chunk
+      }
+      return nextIndex;
+    });
+  }, [learningState.linesToReview.length]);
 
   // Loading state
-  if (allLines.length === 0) {
+  if (allLines.length === 0 || !script) {
     return (
       <div className="h-full flex items-center justify-center text-gray-500">
         Loading...
@@ -29,9 +55,17 @@ export default function ReviewSession({ onExit }: ReviewSessionProps) {
     );
   }
 
-  // Sort lines by order for consistent cycling
-  const sortedLines = [...allLines].sort((a, b) => a.order - b.order);
-  const currentLine = sortedLines[currentIndex % sortedLines.length];
+  // All chunks mastered - session complete
+  if (learningState.phase === "complete") {
+    return <SessionComplete />;
+  }
+
+  // Ensure currentIndex is valid for current chunk
+  const safeIndex = currentIndex % learningState.linesToReview.length;
+  const currentLine = learningState.linesToReview[safeIndex];
+
+  // Calculate mastered count in current chunk
+  const masteredInChunk = learningState.linesToReview.filter(isLineMastered).length;
 
   return (
     <div className="flex flex-col h-full">
@@ -49,8 +83,14 @@ export default function ReviewSession({ onExit }: ReviewSessionProps) {
             Exit
           </Link>
         )}
-        <div className="text-sm text-gray-500">{reviewedCount} reviewed</div>
-        <div className="w-8" /> {/* Spacer for centering */}
+        {chunkSummary && (
+          <div className="text-sm text-gray-500">
+            {chunkSummary.label}
+          </div>
+        )}
+        <div className="text-sm text-gray-500">
+          {masteredInChunk}/{learningState.linesToReview.length} mastered
+        </div>
       </div>
 
       {/* Review card takes remaining space */}
@@ -59,9 +99,10 @@ export default function ReviewSession({ onExit }: ReviewSessionProps) {
           line={currentLine}
           onComplete={handleComplete}
           progress={{
-            current: (currentIndex % sortedLines.length) + 1,
-            total: sortedLines.length,
+            current: safeIndex + 1,
+            total: learningState.linesToReview.length,
           }}
+          streak={currentLine.consecutiveCorrect}
         />
       </div>
     </div>

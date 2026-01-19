@@ -25,12 +25,16 @@ export function gradeLine(line: Line, correct: boolean): Line {
   const dueDate = new Date();
   dueDate.setDate(dueDate.getDate() + interval);
 
+  // Update consecutive correct streak for chunked learning
+  const consecutiveCorrect = correct ? line.consecutiveCorrect + 1 : 0;
+
   return {
     ...line,
     interval,
     repetition,
     efactor,
     dueDate,
+    consecutiveCorrect,
   };
 }
 

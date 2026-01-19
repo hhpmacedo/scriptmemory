@@ -9,12 +9,14 @@ interface ReviewCardProps {
   line: Line;
   onComplete: () => void;
   progress: { current: number; total: number };
+  streak?: number; // consecutive correct count (0-3)
 }
 
 export default function ReviewCard({
   line,
   onComplete,
   progress,
+  streak = 0,
 }: ReviewCardProps) {
   const [revealed, setRevealed] = useState(false);
   const [grading, setGrading] = useState(false);
@@ -37,6 +39,7 @@ export default function ReviewCard({
           repetition: updatedLine.repetition,
           efactor: updatedLine.efactor,
           dueDate: updatedLine.dueDate,
+          consecutiveCorrect: updatedLine.consecutiveCorrect,
         });
         onComplete();
       } catch (error) {
@@ -74,8 +77,19 @@ export default function ReviewCard({
     <div className="flex flex-col h-full">
       {/* Progress indicator */}
       <div className="px-4 py-2">
-        <div className="text-xs text-gray-400 text-center">
-          Line {progress.current} of {progress.total}
+        <div className="text-xs text-gray-400 text-center flex items-center justify-center gap-2">
+          <span>Line {progress.current} of {progress.total}</span>
+          <span className="text-gray-300">|</span>
+          <span className="flex gap-0.5">
+            {[0, 1, 2].map((i) => (
+              <span
+                key={i}
+                className={`w-2 h-2 rounded-full ${
+                  i < streak ? "bg-green-500" : "bg-gray-200"
+                }`}
+              />
+            ))}
+          </span>
         </div>
       </div>
 

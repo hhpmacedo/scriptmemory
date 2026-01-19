@@ -120,7 +120,8 @@ export function parseMarkdown(markdown: string): ParsedScript {
 
 export function createScriptWithLines(
   markdown: string,
-  myCharacter: string
+  myCharacter: string,
+  chunkSize: number = 5
 ): { script: Script; scenes: Scene[]; lines: Line[] } {
   const parsed = parseMarkdown(markdown);
   const now = new Date();
@@ -130,6 +131,7 @@ export function createScriptWithLines(
     title: parsed.title,
     rawMarkdown: markdown,
     myCharacter,
+    chunkSize,
     createdAt: now,
     updatedAt: now,
   };
@@ -172,6 +174,7 @@ export function createScriptWithLines(
           interval: 0,
           repetition: 0,
           efactor: 2.5,
+          consecutiveCorrect: 0,
         };
         lines.push(line);
       }

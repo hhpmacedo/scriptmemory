@@ -3,6 +3,7 @@ export interface Script {
   title: string;
   rawMarkdown: string;
   myCharacter: string; // Character the user is memorizing
+  chunkSize: number; // Number of lines per learning chunk (default 5)
   createdAt: Date;
   updatedAt: Date;
 }
@@ -28,4 +29,6 @@ export interface Line {
   interval: number; // Days until next review
   repetition: number; // Successful recall count
   efactor: number; // Easiness factor
+  // Chunked learning fields
+  consecutiveCorrect: number; // 0-3, resets on wrong answer
 }

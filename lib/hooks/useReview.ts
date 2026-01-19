@@ -48,6 +48,23 @@ export function useScripts(): Script[] {
 }
 
 /**
+ * Get a single script by ID
+ */
+export function useScript(scriptId: string): Script | undefined {
+  return useLiveQuery(() => db.scripts.get(scriptId), [scriptId]);
+}
+
+/**
+ * Get the first (most recent) script - for single-script use case
+ */
+export function useFirstScript(): Script | undefined {
+  return useLiveQuery(async () => {
+    const scripts = await db.scripts.orderBy("createdAt").reverse().toArray();
+    return scripts[0];
+  });
+}
+
+/**
  * Check if any scripts exist
  * Returns undefined while loading, true/false once loaded
  */
