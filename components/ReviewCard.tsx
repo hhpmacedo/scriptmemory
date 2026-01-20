@@ -21,11 +21,12 @@ export default function ReviewCard({
   const [revealed, setRevealed] = useState(false);
   const [grading, setGrading] = useState(false);
 
-  // Reset state when line changes
+  // Reset state when line changes (including when returning to same line after grading)
+  // Use line.id + consecutiveCorrect as dependency to detect when line state has changed
   useEffect(() => {
     setRevealed(false);
     setGrading(false);
-  }, [line.id]);
+  }, [line.id, line.consecutiveCorrect]);
 
   const handleGrade = useCallback(
     async (correct: boolean) => {

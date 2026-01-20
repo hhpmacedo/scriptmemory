@@ -76,14 +76,18 @@ export function useHasScripts(): boolean | undefined {
 
 /**
  * Get all lines for a script (for progress tracking)
+ * Sorted by order for consistent chunk assignment
  */
 export function useAllLines(scriptId?: string): Line[] {
   return (
     useLiveQuery(async () => {
+      let lines: Line[];
       if (scriptId) {
-        return db.lines.where("scriptId").equals(scriptId).toArray();
+        lines = await db.lines.where("scriptId").equals(scriptId).toArray();
+      } else {
+        lines = await db.lines.toArray();
       }
-      return db.lines.toArray();
+      return lines.sort((a, b) => a.order - b.order);
     }, [scriptId]) ?? []
   );
 }

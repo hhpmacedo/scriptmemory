@@ -97,6 +97,7 @@ export default function ReviewSession({ onExit }: ReviewSessionProps) {
       {/* Review card takes remaining space */}
       <div className="flex-1 flex flex-col">
         <ReviewCard
+          key={`${currentLine.id}-${currentLine.consecutiveCorrect}`}
           line={currentLine}
           onComplete={handleComplete}
           chunkMastery={chunkMastery}
