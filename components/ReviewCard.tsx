@@ -78,29 +78,33 @@ export default function ReviewCard({
       {/* Progress indicator */}
       <div className="px-4 py-3">
         <div className="flex items-center justify-center gap-3">
-          {/* Chunk progress - blue dots */}
-          <span className="flex gap-1">
+          {/* Chunk progress - circles with checkmarks for mastered */}
+          <span className="flex gap-1.5">
             {chunkMastery.map((item, i) => (
               <span
                 key={i}
-                className={`w-2.5 h-2.5 rounded-full ${
+                className={`w-5 h-5 flex items-center justify-center text-xs font-bold ${
                   item.mastered
-                    ? "bg-blue-500"
+                    ? "text-blue-600"
                     : item.current
-                    ? "bg-blue-200 ring-2 ring-blue-400"
-                    : "bg-gray-200"
+                    ? "ring-2 ring-blue-400 rounded-full text-blue-400"
+                    : "text-gray-300"
                 }`}
-              />
+              >
+                {item.mastered ? "✓" : "○"}
+              </span>
             ))}
           </span>
-          <span className="text-gray-300">|</span>
-          {/* Streak progress - green dots */}
-          <span className="flex gap-0.5">
+          <span className="text-gray-300 mx-1">|</span>
+          {/* Streak progress - squares for distinction from circles */}
+          <span className="flex gap-1">
             {[0, 1, 2].map((i) => (
               <span
                 key={i}
-                className={`w-2 h-2 rounded-full ${
-                  i < streak ? "bg-green-500" : "bg-gray-200"
+                className={`w-3 h-3 ${
+                  i < streak
+                    ? "bg-green-500 rounded-sm"
+                    : "border-2 border-gray-300 rounded-sm"
                 }`}
               />
             ))}
