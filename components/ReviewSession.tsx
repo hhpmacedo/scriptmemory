@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo } from "react";
+import { useState, useMemo, useCallback } from "react";
 import { useAllLines, useFirstScript } from "@/lib/hooks/useReview";
 import { getChunks, isLineMastered, isChunkMastered } from "@/lib/chunkedLearning";
 import ReviewCard from "./ReviewCard";
@@ -15,37 +15,42 @@ export default function ReviewSession({ onExit }: ReviewSessionProps) {
   const allLines = useAllLines();
   const script = useFirstScript();
   const chunkSize = script?.chunkSize ?? 5;
+  const [cycleIndex, setCycleIndex] = useState(0);
 
-  // Derive everything from data - no manual index state needed
-  const { currentChunk, currentLine, chunkIndex, totalChunks, isComplete } = useMemo(() => {
+  // Get current chunk and its unmastered lines
+  const { currentChunk, unmasteredLines, chunkIndex, totalChunks, isComplete } = useMemo(() => {
     if (allLines.length === 0) {
-      return { currentChunk: [], currentLine: null, chunkIndex: 0, totalChunks: 0, isComplete: true };
+      return { currentChunk: [], unmasteredLines: [], chunkIndex: 0, totalChunks: 0, isComplete: true };
     }
 
     const chunks = getChunks(allLines, chunkSize);
+    const incompleteChunkIndex = chunks.findIndex(chunk => !isChunkMastered(chunk));
 
-    // Find first incomplete chunk
-    let incompleteChunkIndex = chunks.findIndex(chunk => !isChunkMastered(chunk));
-
-    // All chunks mastered
     if (incompleteChunkIndex === -1) {
-      return { currentChunk: [], currentLine: null, chunkIndex: chunks.length - 1, totalChunks: chunks.length, isComplete: true };
+      return { currentChunk: [], unmasteredLines: [], chunkIndex: chunks.length - 1, totalChunks: chunks.length, isComplete: true };
     }
 
     const chunk = chunks[incompleteChunkIndex];
-
-    // Find first unmastered line in chunk (round-robin through unmastered)
-    const unmasteredLines = chunk.filter(line => !isLineMastered(line));
-    const lineToReview = unmasteredLines[0] || chunk[0];
+    const unmastered = chunk.filter(line => !isLineMastered(line));
 
     return {
       currentChunk: chunk,
-      currentLine: lineToReview,
+      unmasteredLines: unmastered,
       chunkIndex: incompleteChunkIndex,
       totalChunks: chunks.length,
       isComplete: false,
     };
   }, [allLines, chunkSize]);
+
+  // Current line cycles through unmastered lines
+  const currentLine = unmasteredLines.length > 0
+    ? unmasteredLines[cycleIndex % unmasteredLines.length]
+    : null;
+
+  // Move to next unmastered line
+  const handleComplete = useCallback(() => {
+    setCycleIndex(prev => prev + 1);
+  }, []);
 
   // Loading state
   if (allLines.length === 0 || !script) {
@@ -89,9 +94,9 @@ export default function ReviewSession({ onExit }: ReviewSessionProps) {
       {/* Review card */}
       <div className="flex-1 flex flex-col">
         <ReviewCard
-          key={currentLine.id}
+          key={`${currentLine.id}-${cycleIndex}`}
           line={currentLine}
-          onComplete={() => {}} // No-op: data change will trigger re-render
+          onComplete={handleComplete}
           chunkMastery={chunkMastery}
           streak={currentLine.consecutiveCorrect}
         />
