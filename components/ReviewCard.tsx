@@ -9,24 +9,23 @@ interface ReviewCardProps {
   line: Line;
   onComplete: () => void;
   chunkMastery: { mastered: boolean; current: boolean }[];
-  streak?: number; // consecutive correct count (0-3)
+  streak: number;
 }
 
 export default function ReviewCard({
   line,
   onComplete,
   chunkMastery,
-  streak = 0,
+  streak,
 }: ReviewCardProps) {
   const [revealed, setRevealed] = useState(false);
   const [grading, setGrading] = useState(false);
 
-  // Reset state when line changes (including when returning to same line after grading)
-  // Use line.id + consecutiveCorrect as dependency to detect when line state has changed
+  // Reset when line changes
   useEffect(() => {
     setRevealed(false);
     setGrading(false);
-  }, [line.id, line.consecutiveCorrect]);
+  }, [line.id]);
 
   const handleGrade = useCallback(
     async (correct: boolean) => {
@@ -34,24 +33,18 @@ export default function ReviewCard({
       setGrading(true);
 
       try {
-        const updatedLine = gradeLine(line, correct);
-        console.log("Grading:", {
-          lineId: line.id,
-          correct,
-          oldConsecutive: line.consecutiveCorrect,
-          newConsecutive: updatedLine.consecutiveCorrect,
+        const updated = gradeLine(line, correct);
+        await db.lines.update(line.id, {
+          interval: updated.interval,
+          repetition: updated.repetition,
+          efactor: updated.efactor,
+          dueDate: updated.dueDate,
+          consecutiveCorrect: updated.consecutiveCorrect,
         });
-        const updateResult = await db.lines.update(line.id, {
-          interval: updatedLine.interval,
-          repetition: updatedLine.repetition,
-          efactor: updatedLine.efactor,
-          dueDate: updatedLine.dueDate,
-          consecutiveCorrect: updatedLine.consecutiveCorrect,
-        });
-        console.log("DB update result:", updateResult);
+        // DB change triggers useLiveQuery, which re-renders parent
         onComplete();
       } catch (error) {
-        console.error("Failed to grade line:", error);
+        console.error("Failed to grade:", error);
         setGrading(false);
       }
     },
@@ -63,9 +56,7 @@ export default function ReviewCard({
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === " " || e.key === "Enter") {
         e.preventDefault();
-        if (!revealed) {
-          setRevealed(true);
-        }
+        if (!revealed) setRevealed(true);
       } else if (revealed && !grading) {
         if (e.key === "ArrowRight" || e.key === "l") {
           e.preventDefault();
@@ -76,17 +67,16 @@ export default function ReviewCard({
         }
       }
     };
-
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, [revealed, grading, handleGrade]);
 
   return (
     <div className="flex flex-col h-full">
-      {/* Progress indicator */}
+      {/* Progress indicators */}
       <div className="px-4 py-3">
         <div className="flex items-center justify-center gap-3">
-          {/* Chunk progress - circles with checkmarks for mastered */}
+          {/* Chunk progress: circles */}
           <span className="flex gap-1.5">
             {chunkMastery.map((item, i) => (
               <span
@@ -103,16 +93,16 @@ export default function ReviewCard({
               </span>
             ))}
           </span>
+
           <span className="text-gray-300 mx-1">|</span>
-          {/* Streak progress - squares for distinction from circles */}
+
+          {/* Streak progress: squares */}
           <span className="flex gap-1">
             {[0, 1, 2].map((i) => (
               <span
                 key={i}
-                className={`w-3 h-3 ${
-                  i < streak
-                    ? "bg-green-500 rounded-sm"
-                    : "border-2 border-gray-300 rounded-sm"
+                className={`w-3 h-3 rounded-sm ${
+                  i < streak ? "bg-green-500" : "border-2 border-gray-300"
                 }`}
               />
             ))}
@@ -122,7 +112,7 @@ export default function ReviewCard({
 
       {/* Card content */}
       <div className="flex-1 flex flex-col p-4 pt-0 overflow-auto">
-        {/* Cue section */}
+        {/* Cue */}
         <div className="mb-6">
           {line.cueCharacter && (
             <div className="text-sm font-medium text-gray-500 uppercase tracking-wide mb-1">
@@ -132,10 +122,9 @@ export default function ReviewCard({
           <div className="text-lg">{line.cue}</div>
         </div>
 
-        {/* Divider */}
         <div className="border-t border-gray-200 my-4" />
 
-        {/* Response section */}
+        {/* Response */}
         {revealed ? (
           <div className="mb-6">
             <div className="text-sm font-medium text-blue-600 uppercase tracking-wide mb-1">
@@ -175,7 +164,7 @@ export default function ReviewCard({
             </button>
           </div>
           <div className="text-xs text-gray-400 text-center mt-2">
-            Keyboard: &larr; missed &middot; &rarr; got it
+            Keyboard: ← missed · → got it
           </div>
         </div>
       )}

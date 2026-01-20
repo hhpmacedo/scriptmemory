@@ -1,8 +1,8 @@
 "use client";
 
-import { useState, useCallback, useMemo } from "react";
+import { useMemo } from "react";
 import { useAllLines, useFirstScript } from "@/lib/hooks/useReview";
-import { getLearningState, getChunkSummary, isLineMastered } from "@/lib/chunkedLearning";
+import { getChunks, isLineMastered, isChunkMastered } from "@/lib/chunkedLearning";
 import ReviewCard from "./ReviewCard";
 import Link from "next/link";
 import SessionComplete from "./SessionComplete";
@@ -14,43 +14,38 @@ interface ReviewSessionProps {
 export default function ReviewSession({ onExit }: ReviewSessionProps) {
   const allLines = useAllLines();
   const script = useFirstScript();
-  const [currentIndex, setCurrentIndex] = useState(0);
-
   const chunkSize = script?.chunkSize ?? 5;
 
-  // Debug: log when allLines changes
-  console.log("ReviewSession render:", {
-    allLinesCount: allLines.length,
-    consecutiveCorrects: allLines.slice(0, 5).map((l) => l.consecutiveCorrect),
-  });
+  // Derive everything from data - no manual index state needed
+  const { currentChunk, currentLine, chunkIndex, totalChunks, isComplete } = useMemo(() => {
+    if (allLines.length === 0) {
+      return { currentChunk: [], currentLine: null, chunkIndex: 0, totalChunks: 0, isComplete: true };
+    }
 
-  // Calculate learning state based on current line progress
-  const learningState = useMemo(
-    () => getLearningState(allLines, chunkSize),
-    [allLines, chunkSize]
-  );
+    const chunks = getChunks(allLines, chunkSize);
 
-  // Get chunk summary for display
-  const chunkSummary = useMemo(() => {
-    if (learningState.phase === "complete") return null;
-    return getChunkSummary(
-      learningState.currentChunkIndex,
-      learningState.totalChunks,
-      chunkSize,
-      allLines.length
-    );
-  }, [learningState, chunkSize, allLines.length]);
+    // Find first incomplete chunk
+    let incompleteChunkIndex = chunks.findIndex(chunk => !isChunkMastered(chunk));
 
-  const handleComplete = useCallback(() => {
-    // Move to next line in the chunk, wrapping within the chunk
-    setCurrentIndex((prev) => {
-      const nextIndex = prev + 1;
-      if (nextIndex >= learningState.linesToReview.length) {
-        return 0; // Wrap back to start of chunk
-      }
-      return nextIndex;
-    });
-  }, [learningState.linesToReview.length]);
+    // All chunks mastered
+    if (incompleteChunkIndex === -1) {
+      return { currentChunk: [], currentLine: null, chunkIndex: chunks.length - 1, totalChunks: chunks.length, isComplete: true };
+    }
+
+    const chunk = chunks[incompleteChunkIndex];
+
+    // Find first unmastered line in chunk (round-robin through unmastered)
+    const unmasteredLines = chunk.filter(line => !isLineMastered(line));
+    const lineToReview = unmasteredLines[0] || chunk[0];
+
+    return {
+      currentChunk: chunk,
+      currentLine: lineToReview,
+      chunkIndex: incompleteChunkIndex,
+      totalChunks: chunks.length,
+      isComplete: false,
+    };
+  }, [allLines, chunkSize]);
 
   // Loading state
   if (allLines.length === 0 || !script) {
@@ -61,30 +56,23 @@ export default function ReviewSession({ onExit }: ReviewSessionProps) {
     );
   }
 
-  // All chunks mastered - session complete
-  if (learningState.phase === "complete") {
+  // All chunks mastered
+  if (isComplete || !currentLine) {
     return <SessionComplete />;
   }
 
-  // Ensure currentIndex is valid for current chunk
-  const safeIndex = currentIndex % learningState.linesToReview.length;
-  const currentLine = learningState.linesToReview[safeIndex];
-
-  // Build chunk mastery array for visual display
-  const chunkMastery = learningState.linesToReview.map((line, idx) => ({
+  // Build progress arrays for display
+  const chunkMastery = currentChunk.map((line) => ({
     mastered: isLineMastered(line),
-    current: idx === safeIndex,
+    current: line.id === currentLine.id,
   }));
 
   return (
     <div className="flex flex-col h-full">
-      {/* Header with exit button */}
+      {/* Header */}
       <div className="flex items-center justify-between px-4 py-3 border-b border-gray-100">
         {onExit ? (
-          <button
-            onClick={onExit}
-            className="text-blue-600 text-sm font-medium"
-          >
+          <button onClick={onExit} className="text-blue-600 text-sm font-medium">
             Exit
           </button>
         ) : (
@@ -92,20 +80,18 @@ export default function ReviewSession({ onExit }: ReviewSessionProps) {
             Exit
           </Link>
         )}
-        {chunkSummary && (
-          <div className="text-sm text-gray-500">
-            {chunkSummary.label}
-          </div>
-        )}
-        <div className="w-10" /> {/* Spacer for centering */}
+        <div className="text-sm text-gray-500">
+          Chunk {chunkIndex + 1} of {totalChunks}
+        </div>
+        <div className="w-10" />
       </div>
 
-      {/* Review card takes remaining space */}
+      {/* Review card */}
       <div className="flex-1 flex flex-col">
         <ReviewCard
-          key={`${currentLine.id}-${currentLine.consecutiveCorrect}`}
+          key={currentLine.id}
           line={currentLine}
-          onComplete={handleComplete}
+          onComplete={() => {}} // No-op: data change will trigger re-render
           chunkMastery={chunkMastery}
           streak={currentLine.consecutiveCorrect}
         />
