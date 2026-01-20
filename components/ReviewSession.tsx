@@ -64,8 +64,11 @@ export default function ReviewSession({ onExit }: ReviewSessionProps) {
   const safeIndex = currentIndex % learningState.linesToReview.length;
   const currentLine = learningState.linesToReview[safeIndex];
 
-  // Calculate mastered count in current chunk
-  const masteredInChunk = learningState.linesToReview.filter(isLineMastered).length;
+  // Build chunk mastery array for visual display
+  const chunkMastery = learningState.linesToReview.map((line, idx) => ({
+    mastered: isLineMastered(line),
+    current: idx === safeIndex,
+  }));
 
   return (
     <div className="flex flex-col h-full">
@@ -88,9 +91,7 @@ export default function ReviewSession({ onExit }: ReviewSessionProps) {
             {chunkSummary.label}
           </div>
         )}
-        <div className="text-sm text-gray-500">
-          {masteredInChunk}/{learningState.linesToReview.length} mastered
-        </div>
+        <div className="w-10" /> {/* Spacer for centering */}
       </div>
 
       {/* Review card takes remaining space */}
@@ -98,10 +99,7 @@ export default function ReviewSession({ onExit }: ReviewSessionProps) {
         <ReviewCard
           line={currentLine}
           onComplete={handleComplete}
-          progress={{
-            current: safeIndex + 1,
-            total: learningState.linesToReview.length,
-          }}
+          chunkMastery={chunkMastery}
           streak={currentLine.consecutiveCorrect}
         />
       </div>

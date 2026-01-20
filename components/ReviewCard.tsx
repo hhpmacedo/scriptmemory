@@ -8,14 +8,14 @@ import { db } from "@/lib/db";
 interface ReviewCardProps {
   line: Line;
   onComplete: () => void;
-  progress: { current: number; total: number };
+  chunkMastery: { mastered: boolean; current: boolean }[];
   streak?: number; // consecutive correct count (0-3)
 }
 
 export default function ReviewCard({
   line,
   onComplete,
-  progress,
+  chunkMastery,
   streak = 0,
 }: ReviewCardProps) {
   const [revealed, setRevealed] = useState(false);
@@ -76,10 +76,25 @@ export default function ReviewCard({
   return (
     <div className="flex flex-col h-full">
       {/* Progress indicator */}
-      <div className="px-4 py-2">
-        <div className="text-xs text-gray-400 text-center flex items-center justify-center gap-2">
-          <span>Line {progress.current} of {progress.total}</span>
+      <div className="px-4 py-3">
+        <div className="flex items-center justify-center gap-3">
+          {/* Chunk progress - blue dots */}
+          <span className="flex gap-1">
+            {chunkMastery.map((item, i) => (
+              <span
+                key={i}
+                className={`w-2.5 h-2.5 rounded-full ${
+                  item.mastered
+                    ? "bg-blue-500"
+                    : item.current
+                    ? "bg-blue-200 ring-2 ring-blue-400"
+                    : "bg-gray-200"
+                }`}
+              />
+            ))}
+          </span>
           <span className="text-gray-300">|</span>
+          {/* Streak progress - green dots */}
           <span className="flex gap-0.5">
             {[0, 1, 2].map((i) => (
               <span
