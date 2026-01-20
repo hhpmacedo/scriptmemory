@@ -22,7 +22,7 @@ export default function ScriptInput() {
     const parsed = parseMarkdown(markdown);
     if (parsed.characters.length === 0) {
       alert(
-        "No characters found.\n\nSupported formats:\n• **Character**: text\n• CHARACTER: text\n• Character: text\n\nUse : or - as separator."
+        "No characters found.\n\nSupported formats:\n• **Character**: text\n• CHARACTER: text\n• Character: text"
       );
       return;
     }
@@ -97,7 +97,7 @@ CHARACTER A: First line`}
           <div className="mt-2 bg-gray-50 p-2 rounded text-gray-600 space-y-1">
             <div><code>**Name**: text</code> or <code>**Name** - text</code></div>
             <div><code>NAME: text</code> or <code>NAME - text</code></div>
-            <div><code>Name: text</code> or <code>Name - text</code></div>
+            <div><code>Name: text</code></div>
           </div>
         </details>
         <p className="text-xs text-gray-400">

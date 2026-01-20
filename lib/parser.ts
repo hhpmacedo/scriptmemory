@@ -23,15 +23,13 @@ interface ParsedScript {
 // 2. **Character Name** - Dialogue (markdown bold with dash)
 // 3. ALL CAPS NAME: dialogue (stage play format with colon)
 // 4. ALL CAPS NAME - dialogue (stage play format with dash)
-// 5. Title Case Name: Dialogue (plain colon)
-// 6. Title Case Name - Dialogue (plain dash)
+// 5. Title Case Name: Dialogue (plain colon only - dash is too ambiguous)
 const LINE_PATTERNS = [
   /^\*\*([^*]+)\*\*:\s*(.+)$/,                          // **Name**: text
   /^\*\*([^*]+)\*\*\s*-\s*(.+)$/,                       // **Name** - text
   /^([A-Z][A-Z.']*(?:\s+[A-Z][A-Z.']*){0,2}):\s*(.+)$/,  // ALL CAPS: text (1-3 words)
   /^([A-Z][A-Z.']*(?:\s+[A-Z][A-Z.']*){0,2})\s+-\s+(.+)$/, // ALL CAPS - text (1-3 words)
   /^([A-Z][a-z.']*(?:\s+[A-Z][a-z.']*){0,2}):\s*(.+)$/,  // Title Case: text (1-3 words)
-  /^([A-Z][a-z.']*(?:\s+[A-Z][a-z.']*){0,2})\s+-\s+(.+)$/, // Title Case - text (1-3 words)
 ];
 
 // Patterns for scene notes to skip
