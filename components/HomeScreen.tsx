@@ -27,7 +27,7 @@ export default function HomeScreen({
         href="/scripts/new"
         className="text-blue-600 text-sm font-medium"
       >
-        Add another script
+        Add new script
       </Link>
     </div>
   );

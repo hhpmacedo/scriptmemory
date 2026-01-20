@@ -58,6 +58,11 @@ export default function ScriptInput() {
       );
 
       await db.transaction("rw", db.scripts, db.scenes, db.lines, async () => {
+        // Clear existing data before adding new script
+        await db.lines.clear();
+        await db.scenes.clear();
+        await db.scripts.clear();
+        // Add new script
         await db.scripts.add(script);
         await db.scenes.bulkAdd(scenes);
         await db.lines.bulkAdd(lines);
@@ -74,7 +79,7 @@ export default function ScriptInput() {
   if (step === "paste") {
     return (
       <div className="flex flex-col h-full p-4 gap-4">
-        <h1 className="text-xl font-semibold">Add Script</h1>
+        <h1 className="text-xl font-semibold">Add New Script</h1>
         <p className="text-gray-600 text-sm">
           Paste your script using this format:
         </p>
