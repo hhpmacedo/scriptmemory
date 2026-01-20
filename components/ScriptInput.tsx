@@ -22,7 +22,7 @@ export default function ScriptInput() {
     const parsed = parseMarkdown(markdown);
     if (parsed.characters.length === 0) {
       alert(
-        "No characters found. Make sure your script uses the format:\n**Character**: Dialogue"
+        "No characters found.\n\nSupported formats:\n• **Character**: text\n• CHARACTER: text\n• Character: text\n\nUse : or - as separator."
       );
       return;
     }
@@ -81,16 +81,28 @@ export default function ScriptInput() {
       <div className="flex flex-col h-full p-4 gap-4">
         <h1 className="text-xl font-semibold">Add New Script</h1>
         <p className="text-gray-600 text-sm">
-          Paste your script using this format:
+          Paste your script. Common formats:
         </p>
         <pre className="text-xs bg-gray-100 p-3 rounded text-gray-700">
-          {`# Script Title
+          {`**Character A**: First line
+**Character B**: Response
 
-## Scene Name
-
-**Character A**: First line
-**Character B**: Response line`}
+Or use ALL CAPS:
+CHARACTER A: First line`}
         </pre>
+        <details className="text-xs text-gray-500">
+          <summary className="cursor-pointer text-blue-600">
+            See all supported formats
+          </summary>
+          <div className="mt-2 bg-gray-50 p-2 rounded text-gray-600 space-y-1">
+            <div><code>**Name**: text</code> or <code>**Name** - text</code></div>
+            <div><code>NAME: text</code> or <code>NAME - text</code></div>
+            <div><code>Name: text</code> or <code>Name - text</code></div>
+          </div>
+        </details>
+        <p className="text-xs text-gray-400">
+          Stage directions in *italics*, (parentheses), or [brackets] are skipped.
+        </p>
         <textarea
           className="flex-1 border rounded-lg p-3 text-base resize-none focus:outline-none focus:ring-2 focus:ring-blue-500"
           placeholder="Paste your script here..."
