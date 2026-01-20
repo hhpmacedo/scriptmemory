@@ -18,6 +18,12 @@ export default function ReviewSession({ onExit }: ReviewSessionProps) {
 
   const chunkSize = script?.chunkSize ?? 5;
 
+  // Debug: log when allLines changes
+  console.log("ReviewSession render:", {
+    allLinesCount: allLines.length,
+    consecutiveCorrects: allLines.slice(0, 5).map((l) => l.consecutiveCorrect),
+  });
+
   // Calculate learning state based on current line progress
   const learningState = useMemo(
     () => getLearningState(allLines, chunkSize),

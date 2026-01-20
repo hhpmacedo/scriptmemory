@@ -35,13 +35,20 @@ export default function ReviewCard({
 
       try {
         const updatedLine = gradeLine(line, correct);
-        await db.lines.update(line.id, {
+        console.log("Grading:", {
+          lineId: line.id,
+          correct,
+          oldConsecutive: line.consecutiveCorrect,
+          newConsecutive: updatedLine.consecutiveCorrect,
+        });
+        const updateResult = await db.lines.update(line.id, {
           interval: updatedLine.interval,
           repetition: updatedLine.repetition,
           efactor: updatedLine.efactor,
           dueDate: updatedLine.dueDate,
           consecutiveCorrect: updatedLine.consecutiveCorrect,
         });
+        console.log("DB update result:", updateResult);
         onComplete();
       } catch (error) {
         console.error("Failed to grade line:", error);
