@@ -136,6 +136,33 @@ body::before {
   animation: scaleIn 0.3s ease-out forwards;
 }
 
+/* Flash animations for correct/incorrect feedback */
+@keyframes flashCorrect {
+  0%, 100% {
+    box-shadow: none;
+  }
+  50% {
+    box-shadow: 0 0 16px var(--success), 0 0 24px var(--success);
+  }
+}
+
+@keyframes flashIncorrect {
+  0%, 100% {
+    box-shadow: none;
+  }
+  50% {
+    box-shadow: 0 0 16px var(--error), 0 0 24px var(--error);
+  }
+}
+
+.animate-flash-correct {
+  animation: flashCorrect 0.4s ease-out;
+}
+
+.animate-flash-incorrect {
+  animation: flashIncorrect 0.4s ease-out;
+}
+
 /* Stagger delays for list items */
 .stagger-1 { animation-delay: 0.05s; }
 .stagger-2 { animation-delay: 0.1s; }

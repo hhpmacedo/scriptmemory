@@ -78,10 +78,11 @@ export default function ReviewSession({ onExit }: ReviewSessionProps) {
     return <SessionComplete />;
   }
 
-  // Build progress arrays for display
+  // Build progress arrays for display - include consecutiveCorrect for gradual fill
   const chunkMastery = currentChunk.map((line) => ({
-    mastered: isLineMastered(line),
+    consecutiveCorrect: line.consecutiveCorrect,
     current: line.id === currentLine.id,
+    lineId: line.id,
   }));
 
   return (

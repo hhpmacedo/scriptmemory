@@ -5,10 +5,16 @@ import type { Line } from "@/lib/types";
 import { gradeLine } from "@/lib/scheduler";
 import { db } from "@/lib/db";
 
+interface ChunkProgress {
+  consecutiveCorrect: number;
+  current: boolean;
+  lineId: string;
+}
+
 interface ReviewCardProps {
   line: Line;
   onComplete: () => void;
-  chunkMastery: { mastered: boolean; current: boolean }[];
+  chunkMastery: ChunkProgress[];
   streak: number;
 }
 
@@ -20,17 +26,20 @@ export default function ReviewCard({
 }: ReviewCardProps) {
   const [revealed, setRevealed] = useState(false);
   const [grading, setGrading] = useState(false);
+  const [lastGradeResult, setLastGradeResult] = useState<"correct" | "incorrect" | null>(null);
 
   // Reset when line changes
   useEffect(() => {
     setRevealed(false);
     setGrading(false);
+    setLastGradeResult(null);
   }, [line.id]);
 
   const handleGrade = useCallback(
     async (correct: boolean) => {
       if (grading) return;
       setGrading(true);
+      setLastGradeResult(correct ? "correct" : "incorrect");
 
       try {
         const updated = gradeLine(line, correct);
@@ -41,11 +50,14 @@ export default function ReviewCard({
           dueDate: updated.dueDate,
           consecutiveCorrect: updated.consecutiveCorrect,
         });
-        // DB change triggers useLiveQuery, which re-renders parent
-        onComplete();
+        // Brief delay to show flash animation before transitioning
+        setTimeout(() => {
+          onComplete();
+        }, 400);
       } catch (error) {
         console.error("Failed to grade:", error);
         setGrading(false);
+        setLastGradeResult(null);
       }
     },
     [line, grading, onComplete]
@@ -76,30 +88,54 @@ export default function ReviewCard({
       {/* Progress indicators - theatrical marquee style */}
       <div className="px-4 py-4">
         <div className="flex items-center justify-center gap-4">
-          {/* Chunk progress: dots with glow for current */}
+          {/* Chunk progress: dots showing per-line progress (0-3) */}
           <div className="flex gap-2">
-            {chunkMastery.map((item, i) => (
-              <span
-                key={i}
-                className={`w-2.5 h-2.5 rounded-full transition-all duration-300 ${
-                  item.mastered
-                    ? ""
-                    : item.current
-                    ? "scale-125"
-                    : ""
-                }`}
-                style={{
-                  background: item.mastered
-                    ? "var(--accent)"
-                    : item.current
-                    ? "var(--accent)"
-                    : "var(--border-strong)",
-                  boxShadow: item.current
-                    ? "0 0 12px var(--accent)"
-                    : "none",
-                }}
-              />
-            ))}
+            {chunkMastery.map((item) => {
+              const isMastered = item.consecutiveCorrect >= 3;
+              const fillPercent = isMastered ? 100 : (item.consecutiveCorrect / 3) * 100;
+              const isFlashing = item.current && lastGradeResult;
+              const flashClass = isFlashing
+                ? lastGradeResult === "correct"
+                  ? "animate-flash-correct"
+                  : "animate-flash-incorrect"
+                : "";
+
+              return (
+                <span
+                  key={item.lineId}
+                  className={`relative w-3 h-3 rounded-full transition-all duration-300 ${flashClass} ${
+                    item.current ? "scale-125" : ""
+                  }`}
+                  style={{
+                    background: isMastered
+                      ? "var(--accent)"
+                      : fillPercent > 0
+                      ? `conic-gradient(var(--accent) ${fillPercent}%, var(--border-strong) ${fillPercent}%)`
+                      : "var(--border-strong)",
+                    boxShadow: item.current
+                      ? "0 0 12px var(--accent)"
+                      : "none",
+                  }}
+                >
+                  {/* Checkmark for mastered lines */}
+                  {isMastered && (
+                    <svg
+                      className="absolute inset-0 w-full h-full p-0.5"
+                      viewBox="0 0 12 12"
+                    >
+                      <path
+                        d="M2.5 6L5 8.5L9.5 3.5"
+                        stroke="var(--background)"
+                        strokeWidth="2"
+                        fill="none"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                      />
+                    </svg>
+                  )}
+                </span>
+              );
+            })}
           </div>
 
           <span
@@ -107,20 +143,27 @@ export default function ReviewCard({
             style={{ background: "var(--border-strong)" }}
           />
 
-          {/* Streak progress: elegant bars */}
+          {/* Streak progress: elegant bars with flash feedback */}
           <div className="flex gap-1.5">
-            {[0, 1, 2].map((i) => (
-              <span
-                key={i}
-                className="w-4 h-1.5 rounded-full transition-all duration-300"
-                style={{
-                  background:
-                    i < streak ? "var(--success)" : "var(--border-strong)",
-                  boxShadow:
-                    i < streak ? "0 0 8px rgba(34, 197, 94, 0.5)" : "none",
-                }}
-              />
-            ))}
+            {[0, 1, 2].map((i) => {
+              const isFilled = i < streak;
+              const flashClass = lastGradeResult
+                ? lastGradeResult === "correct"
+                  ? "animate-flash-correct"
+                  : "animate-flash-incorrect"
+                : "";
+
+              return (
+                <span
+                  key={i}
+                  className={`w-4 h-1.5 rounded-full transition-all duration-300 ${flashClass}`}
+                  style={{
+                    background: isFilled ? "var(--success)" : "var(--border-strong)",
+                    boxShadow: isFilled ? "0 0 8px rgba(34, 197, 94, 0.5)" : "none",
+                  }}
+                />
+              );
+            })}
           </div>
         </div>
       </div>
