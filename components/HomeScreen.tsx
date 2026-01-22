@@ -73,6 +73,9 @@ export default function HomeScreen({
         style={{ color: "var(--foreground-subtle)" }}
       >
         <p>An experimental project by Hugo H. Macedo</p>
+        <p className="mt-1 opacity-50" style={{ fontSize: "10px" }}>
+          {process.env.BUILD_TIMESTAMP?.slice(0, 10)}
+        </p>
       </footer>
     </div>
   );
