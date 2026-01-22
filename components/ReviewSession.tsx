@@ -55,8 +55,20 @@ export default function ReviewSession({ onExit }: ReviewSessionProps) {
   // Loading state
   if (allLines.length === 0 || !script) {
     return (
-      <div className="h-full flex items-center justify-center text-gray-500">
-        Loading...
+      <div
+        className="h-full flex items-center justify-center"
+        style={{ color: "var(--foreground-subtle)" }}
+      >
+        <div className="flex flex-col items-center gap-3">
+          <div
+            className="w-6 h-6 rounded-full border-2 animate-spin"
+            style={{
+              borderColor: "var(--border-strong)",
+              borderTopColor: "var(--accent)",
+            }}
+          />
+          <span>Loading your script...</span>
+        </div>
       </div>
     );
   }
@@ -74,20 +86,42 @@ export default function ReviewSession({ onExit }: ReviewSessionProps) {
 
   return (
     <div className="flex flex-col h-full">
-      {/* Header */}
-      <div className="flex items-center justify-between px-4 py-3 border-b border-gray-100">
+      {/* Header - theatrical styling */}
+      <div
+        className="flex items-center justify-between px-5 py-4"
+        style={{ borderBottom: "1px solid var(--border)" }}
+      >
         {onExit ? (
-          <button onClick={onExit} className="text-blue-600 text-sm font-medium">
+          <button
+            onClick={onExit}
+            className="text-sm font-medium transition-opacity hover:opacity-70"
+            style={{ color: "var(--accent)" }}
+          >
             Exit
           </button>
         ) : (
-          <Link href="/" className="text-blue-600 text-sm font-medium">
+          <Link
+            href="/"
+            className="text-sm font-medium transition-opacity hover:opacity-70"
+            style={{ color: "var(--accent)" }}
+          >
             Exit
           </Link>
         )}
-        <div className="text-sm text-gray-500">
-          Chunk {chunkIndex + 1} of {totalChunks}
+
+        {/* Chunk indicator with theatrical styling */}
+        <div
+          className="text-sm font-medium px-3 py-1 rounded-full"
+          style={{
+            background: "var(--background-elevated)",
+            color: "var(--foreground-muted)",
+          }}
+        >
+          <span style={{ color: "var(--accent)" }}>{chunkIndex + 1}</span>
+          <span style={{ color: "var(--foreground-subtle)" }}> / {totalChunks}</span>
         </div>
+
+        {/* Empty spacer for balance */}
         <div className="w-10" />
       </div>
 

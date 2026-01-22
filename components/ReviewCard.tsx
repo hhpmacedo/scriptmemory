@@ -73,98 +73,169 @@ export default function ReviewCard({
 
   return (
     <div className="flex flex-col h-full">
-      {/* Progress indicators */}
-      <div className="px-4 py-3">
-        <div className="flex items-center justify-center gap-3">
-          {/* Chunk progress: circles */}
-          <span className="flex gap-1.5">
+      {/* Progress indicators - theatrical marquee style */}
+      <div className="px-4 py-4">
+        <div className="flex items-center justify-center gap-4">
+          {/* Chunk progress: dots with glow for current */}
+          <div className="flex gap-2">
             {chunkMastery.map((item, i) => (
               <span
                 key={i}
-                className={`w-5 h-5 flex items-center justify-center text-xs font-bold ${
+                className={`w-2.5 h-2.5 rounded-full transition-all duration-300 ${
                   item.mastered
-                    ? "text-blue-600"
+                    ? ""
                     : item.current
-                    ? "ring-2 ring-blue-400 rounded-full text-blue-400"
-                    : "text-gray-300"
+                    ? "scale-125"
+                    : ""
                 }`}
-              >
-                {item.mastered ? "✓" : "○"}
-              </span>
+                style={{
+                  background: item.mastered
+                    ? "var(--accent)"
+                    : item.current
+                    ? "var(--accent)"
+                    : "var(--border-strong)",
+                  boxShadow: item.current
+                    ? "0 0 12px var(--accent)"
+                    : "none",
+                }}
+              />
             ))}
-          </span>
+          </div>
 
-          <span className="text-gray-300 mx-1">|</span>
+          <span
+            className="w-px h-4"
+            style={{ background: "var(--border-strong)" }}
+          />
 
-          {/* Streak progress: squares */}
-          <span className="flex gap-1">
+          {/* Streak progress: elegant bars */}
+          <div className="flex gap-1.5">
             {[0, 1, 2].map((i) => (
               <span
                 key={i}
-                className={`w-3 h-3 rounded-sm ${
-                  i < streak ? "bg-green-500" : "border-2 border-gray-300"
-                }`}
+                className="w-4 h-1.5 rounded-full transition-all duration-300"
+                style={{
+                  background:
+                    i < streak ? "var(--success)" : "var(--border-strong)",
+                  boxShadow:
+                    i < streak ? "0 0 8px rgba(34, 197, 94, 0.5)" : "none",
+                }}
               />
             ))}
-          </span>
+          </div>
         </div>
       </div>
 
       {/* Card content */}
-      <div className="flex-1 flex flex-col p-4 pt-0 overflow-auto">
-        {/* Cue */}
-        <div className="mb-6">
+      <div className="flex-1 flex flex-col p-5 pt-2 overflow-auto">
+        {/* Cue - the other character's line */}
+        <div className="mb-6 animate-fade-in">
           {line.cueCharacter && (
-            <div className="text-sm font-medium text-gray-500 uppercase tracking-wide mb-1">
+            <div
+              className="text-xs font-semibold uppercase tracking-widest mb-2"
+              style={{ color: "var(--foreground-subtle)" }}
+            >
               {line.cueCharacter}
             </div>
           )}
-          <div className="text-lg">{line.cue}</div>
+          <div
+            className="text-lg leading-relaxed"
+            style={{ color: "var(--foreground-muted)" }}
+          >
+            {line.cue}
+          </div>
         </div>
 
-        <div className="border-t border-gray-200 my-4" />
+        {/* Elegant divider */}
+        <div
+          className="h-px my-4"
+          style={{
+            background:
+              "linear-gradient(90deg, transparent, var(--border-strong), transparent)",
+          }}
+        />
 
-        {/* Response */}
+        {/* Response - your line */}
         {revealed ? (
-          <div className="mb-6">
-            <div className="text-sm font-medium text-blue-600 uppercase tracking-wide mb-1">
+          <div className="mb-6 animate-scale-in">
+            <div
+              className="text-xs font-semibold uppercase tracking-widest mb-2"
+              style={{ color: "var(--accent)" }}
+            >
               {line.responseCharacter}
             </div>
-            <div className="text-lg font-medium">{line.response}</div>
+            <div className="text-xl font-medium leading-relaxed">
+              {line.response}
+            </div>
           </div>
         ) : (
           <div className="flex-1 flex items-center justify-center">
             <button
               onClick={() => setRevealed(true)}
-              className="w-full max-w-xs min-h-14 bg-gray-100 hover:bg-gray-200 rounded-xl text-gray-700 font-medium transition-colors"
+              className="w-full max-w-xs min-h-14 rounded-xl font-medium transition-all duration-200 hover:scale-[1.02] active:scale-[0.98]"
+              style={{
+                background: "var(--background-elevated)",
+                border: "1px solid var(--border)",
+                color: "var(--foreground-muted)",
+              }}
             >
-              Show Answer
+              Reveal Your Line
             </button>
           </div>
         )}
       </div>
 
-      {/* Grade buttons */}
+      {/* Grade buttons - dramatic contrast */}
       {revealed && (
-        <div className="p-4 border-t border-gray-100">
+        <div
+          className="p-4"
+          style={{ borderTop: "1px solid var(--border)" }}
+        >
           <div className="flex gap-3">
             <button
               onClick={() => handleGrade(false)}
               disabled={grading}
-              className="flex-1 min-h-14 bg-red-50 hover:bg-red-100 text-red-700 rounded-xl font-medium transition-colors disabled:opacity-50"
+              className="flex-1 min-h-14 rounded-xl font-semibold transition-all duration-200 hover:scale-[1.01] active:scale-[0.99] disabled:opacity-50"
+              style={{
+                background: "var(--error-subtle)",
+                color: "var(--error)",
+              }}
             >
-              Missed it
+              Missed It
             </button>
             <button
               onClick={() => handleGrade(true)}
               disabled={grading}
-              className="flex-1 min-h-14 bg-green-50 hover:bg-green-100 text-green-700 rounded-xl font-medium transition-colors disabled:opacity-50"
+              className="flex-1 min-h-14 rounded-xl font-semibold transition-all duration-200 hover:scale-[1.01] active:scale-[0.99] disabled:opacity-50"
+              style={{
+                background: "var(--success-subtle)",
+                color: "var(--success)",
+              }}
             >
-              Got it
+              Got It
             </button>
           </div>
-          <div className="text-xs text-gray-400 text-center mt-2">
-            Keyboard: ← missed · → got it
+          <div
+            className="text-xs text-center mt-3"
+            style={{ color: "var(--foreground-subtle)" }}
+          >
+            <span style={{ opacity: 0.7 }}>Keyboard:</span>{" "}
+            <span
+              className="px-1.5 py-0.5 rounded text-[10px]"
+              style={{ background: "var(--background-elevated)" }}
+            >
+              &#8592;
+            </span>{" "}
+            missed{" "}
+            <span className="mx-2" style={{ color: "var(--border-strong)" }}>
+              |
+            </span>{" "}
+            <span
+              className="px-1.5 py-0.5 rounded text-[10px]"
+              style={{ background: "var(--background-elevated)" }}
+            >
+              &#8594;
+            </span>{" "}
+            got it
           </div>
         </div>
       )}
