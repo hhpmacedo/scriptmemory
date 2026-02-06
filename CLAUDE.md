@@ -1,8 +1,19 @@
-# CLAUDE.md
+# ScriptMemory
 
-This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+Spaced repetition app for memorizing theatrical scripts. Experimental project by Hugo H. Macedo.
 
-> **Experimental Project** - This is an experimental project by Hugo H. Macedo.
+**GitHub:** `hhpmacedo/scriptmemory`
+
+## Project Status
+
+- **Status:** Paused
+- **Live URL:** TBD (Vercel configured but URL not documented)
+- **Last session:** 2026-01-22
+- **Current focus:** Chunked learning and per-line progress tracking
+- **Next steps:**
+  - Resume development when Hugo has time
+  - 12 uncommitted files with work in progress
+- **Blockers:** None (paused by choice)
 
 ## Commands
 
